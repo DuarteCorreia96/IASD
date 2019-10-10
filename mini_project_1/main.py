@@ -6,22 +6,10 @@ def load(filename):
         lines = fh.readlines()
 
     types = {
-        "A" : {
-            "class": Airport,
-            "data" : {}
-        },
-        "C" : {
-            "class": Plane_Class,
-            "data" : {}
-        },        
-        "C" : {
-            "class": Plane,
-            "data" : {}
-        },        
-        "L" : {
-            "class": Trip,
-            "data" : []
-        }
+        "A" : { "class": Airport,     "data" : {} },
+        "C" : { "class": Plane_Class, "data" : {} },        
+        "P" : { "class": Plane,       "data" : {} },        
+        "L" : { "class": Trip,        "data" : {} }
     }
 
     for line in lines:
@@ -30,11 +18,15 @@ def load(filename):
 
             aero_object = types[key]["class"](line)
 
-            if (not isinstance(aero_object, Trip)):
-                types[key]["data"][aero_object.id] = aero_object  
-            else: 
-                types[key]["data"].append(aero_object)     
-                    
+            types[key]["data"][aero_object.id] = aero_object  
+
+
+    # Add planes to their classes
+    for c in types["C"]["data"].values():
+        for plane in types["P"]["data"].values():
+
+            if (c.id == plane.plane_class):
+                c.add_plane(plane)
 
     print_types(types)
     
@@ -42,20 +34,13 @@ def load(filename):
 def print_types(types):
 
     for key in types:
-
-        if (key == "L"):
-            continue
-
         print("\n")
         for obj in types[key]["data"]:
             print(str(types[key]["data"][obj]))
-    
-    print("\n")
-    for trip in types["L"]["data"]:
-        print(str(trip))
+
 
 def main():
-    load("examples/1.txt")
+    load("examples/2.txt")
 
 if __name__ == "__main__":
     main()

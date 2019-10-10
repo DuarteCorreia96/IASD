@@ -48,16 +48,27 @@ class Plane_Class:
 
         self.id        = words[1]
         self.duration  = words[2]
+        self.planes    = []
 
     def __str__(self):
 
         to_print  = "  Class: " + str(self.id)
         to_print += "  Duration: " + str(self.duration)
 
+        to_print += "  Planes of the class: "
+        for plane in self.planes:
+            to_print += plane.id + " | "
+
         return to_print
+
+    def add_plane(self, plane):
+
+        self.planes.append(plane)
 
 
 class Trip:
+
+    counter = 0
 
     def __init__(self, line):
 
@@ -68,6 +79,9 @@ class Trip:
         self.duration  = words[3]
 
         self.profit = []
+        self.id = Trip.counter
+
+        Trip.counter += 1
 
         w = 4
         while (w + 1 < len(words)):
