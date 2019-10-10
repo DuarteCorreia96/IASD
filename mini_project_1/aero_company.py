@@ -31,13 +31,23 @@ class Airport:
         self.open  = words[2]
         self.close = words[3]
 
+        self.trips = []
+
     def __str__(self):
 
         to_print  = "  Code: " + str(self.id)
         to_print += "  Open: " + str(self.open)
         to_print += "  Close: " + str(self.close)
 
+        to_print += "  Trips: "
+        for trip in self.trips:
+            to_print += str(trip.id) + " | "
+
         return to_print
+
+    def add_trip(self, trip):
+
+        self.trips.append(trip)
 
 
 class Plane_Class:
