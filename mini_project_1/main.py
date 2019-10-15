@@ -52,7 +52,7 @@ def get_new_state(old_state, action):
 
     trip_id  = action[0]
     airplane = action[1]
-    
+
     problem  = old_state["Problem"]
     plane_class = problem["P"]["data"][airplane].plane_class
 
@@ -68,7 +68,7 @@ def get_new_state(old_state, action):
 
     new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
     new_state[airplane]["Schedule"] = copy.copy(old_state[airplane]["Schedule"])
-    new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
+    new_state[airplane]["Schedule"].append(trip_id)
 
     return new_state
 
