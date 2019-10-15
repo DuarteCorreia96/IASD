@@ -38,6 +38,8 @@ def load(filename):
 
     print_types(types)
 
+    return types
+
 
 def print_types(types):
 
@@ -48,8 +50,44 @@ def print_types(types):
         print("\n")
 
 
+def get_new_state(problem, old_state, trip_id, airplane):
+
+    plane_class = problem["P"]["data"][airplane].plane_class
+
+    # First creates a shallow copy of old state
+    new_state = old_state.copy()
+
+    # Then modifies the part that is affected by the new trip
+    new_state[airplane] = copy.deepcopy(old_state[airplane])
+    new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
+    new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
+
+    profit = problem["L"]["data"][trip_id].profit[plane_class]
+    new_state[airplane]["Profit"] += profit
+    new_state["Total Profit"]     += profit
+
+    return new_state
+
 def main():
-    load("examples/2.txt")
+    
+    problem = load("examples/2.txt")
+    
+    state = {"Total Profit" : 0}
+    for key in problem["P"]["data"]:
+
+        state[key] = {}
+        state[key]["Schedule"] = []
+        state[key]["Airport"] = None
+        state[key]["Profit"] = 0
+
+    trip_id = 0
+    airplane = "CS-TUA"
+    new_state = get_new_state(problem, state, trip_id, airplane)
+    new_state_2 = get_new_state(problem, new_state, trip_id = 1, airplane= airplane)
+
+    print(state)
+    print(new_state)
+    print(new_state_2)
 
 if __name__ == "__main__":
     main()

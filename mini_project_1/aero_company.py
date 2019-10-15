@@ -88,7 +88,7 @@ class Trip:
         self.arrival   = words[2]
         self.duration  = words[3]
 
-        self.profit = []
+        self.profit = {}
         self.id = Trip.counter
 
         Trip.counter += 1
@@ -96,7 +96,7 @@ class Trip:
         w = 4
         while (w + 1 < len(words)):
 
-            self.profit.append((words[w], words[w + 1])) 
+            self.profit[words[w]] = int( words[w + 1] )
             w += 2
 
     def __str__(self):
@@ -106,8 +106,8 @@ class Trip:
         to_print += "  Duration: " + str(self.duration)
 
         template = "  | Class : {:4}   Profit : {:5}"
-        for class_cost in self.profit:
-            to_print += template.format(class_cost[0], class_cost[1])
+        for class_key in self.profit:
+            to_print += template.format(class_key, self.profit[class_key])
 
         return to_print
 
