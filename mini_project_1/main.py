@@ -58,12 +58,9 @@ def get_new_state(problem, old_state, trip_id, airplane):
     new_state = old_state.copy()
 
     # Then modifies the part that is affected by the new trip
-    new_state[airplane] = copy.deepcopy({})
+    new_state[airplane] = {}
 
-    new_state[airplane]["Schedule"] = []
-    for trip in old_state[airplane]["Schedule"]:
-         new_state[airplane]["Schedule"].append(trip)
-
+    new_state[airplane]["Schedule"] = copy.copy(old_state[airplane]["Schedule"])
     new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
     new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
 
@@ -87,12 +84,14 @@ def main():
 
     trip_id = 0
     airplane = "CS-TUA"
-    new_state = get_new_state(problem, state, trip_id, airplane)
-    new_state_2 = get_new_state(problem, new_state, trip_id = 1, airplane= airplane)
 
-    print(state)
-    print(new_state)
-    print(new_state_2)
+    states = [state]
+    states.append(get_new_state(problem, states[-1], trip_id, airplane))
+    states.append(get_new_state(problem, states[-1], 1      , airplane))
+    states.append(get_new_state(problem, states[-1], 2      , "CS-TVB"))
+
+    for stat in states:
+        print(stat)
 
 if __name__ == "__main__":
     main()
