@@ -58,12 +58,17 @@ def get_new_state(problem, old_state, trip_id, airplane):
     new_state = old_state.copy()
 
     # Then modifies the part that is affected by the new trip
-    new_state[airplane] = copy.deepcopy(old_state[airplane])
+    new_state[airplane] = copy.deepcopy({})
+
+    new_state[airplane]["Schedule"] = []
+    for trip in old_state[airplane]["Schedule"]:
+         new_state[airplane]["Schedule"].append(trip)
+
     new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
     new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
 
     profit = problem["L"]["data"][trip_id].profit[plane_class]
-    new_state[airplane]["Profit"] += profit
+    new_state[airplane]["Profit"]  = old_state[airplane]["Profit"] + profit
     new_state["Total Profit"]     += profit
 
     return new_state
