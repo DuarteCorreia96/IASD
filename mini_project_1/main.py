@@ -34,8 +34,6 @@ def load(filename):
             if (trip.departure == airport.id):
                 airport.add_trip(trip)
 
-    # types_new = copy.deepcopy(types)
-
     print_types(types)
 
     return types
@@ -50,8 +48,12 @@ def print_types(types):
         print("\n")
 
 
-def get_new_state(problem, old_state, trip_id, airplane):
+def get_new_state(old_state, action):
 
+    trip_id  = action[0]
+    airplane = action[1]
+    
+    problem  = old_state["Problem"]
     plane_class = problem["P"]["data"][airplane].plane_class
 
     # First creates a shallow copy of old state
@@ -60,13 +62,13 @@ def get_new_state(problem, old_state, trip_id, airplane):
     # Then modifies the part that is affected by the new trip
     new_state[airplane] = {}
 
-    new_state[airplane]["Schedule"] = copy.copy(old_state[airplane]["Schedule"])
-    new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
-    new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
-
     profit = problem["L"]["data"][trip_id].profit[plane_class]
     new_state[airplane]["Profit"]  = old_state[airplane]["Profit"] + profit
     new_state["Total Profit"]     += profit
+
+    new_state[airplane]["Airport"] = problem["L"]["data"][trip_id].arrival
+    new_state[airplane]["Schedule"] = copy.copy(old_state[airplane]["Schedule"])
+    new_state[airplane]["Schedule"].append(problem["L"]["data"][trip_id])
 
     return new_state
 
@@ -74,24 +76,30 @@ def main():
     
     problem = load("examples/2.txt")
     
-    state = {"Total Profit" : 0}
+    state = {"Problem": problem, "Total Profit" : 0}
     for key in problem["P"]["data"]:
 
         state[key] = {}
-        state[key]["Schedule"] = []
-        state[key]["Airport"] = None
         state[key]["Profit"] = 0
+        state[key]["Airport"] = None
+        state[key]["Schedule"] = []
 
     trip_id = 0
     airplane = "CS-TUA"
 
     states = [state]
-    states.append(get_new_state(problem, states[-1], trip_id, airplane))
-    states.append(get_new_state(problem, states[-1], 1      , airplane))
-    states.append(get_new_state(problem, states[-1], 2      , "CS-TVB"))
+    states.append(get_new_state(states[-1], (trip_id, airplane)))
+    states.append(get_new_state(states[-1], (1      , airplane)))
+    states.append(get_new_state(states[-1], (2      , "CS-TVB")))
 
     for stat in states:
-        print(stat)
+        print("")
+        for key in stat:
+            if (key == "Problem"):
+                continue
+
+            print(key," : ",stat[key])
+
 
 if __name__ == "__main__":
     main()
