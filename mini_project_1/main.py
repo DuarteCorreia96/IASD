@@ -25,6 +25,8 @@ def main():
 
             print(key," : ",stat[key])
 
+    for action in problem.actions(states[-2]):
+        print(action)
 
 if __name__ == "__main__":
     main()

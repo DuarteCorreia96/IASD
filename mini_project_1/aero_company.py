@@ -41,13 +41,13 @@ class Airport:
 
         to_print += "  Trips: "
         for trip in self.trips:
-            to_print += str(trip.id) + " | "
+            to_print += str(trip) + " | "
 
         return to_print
 
     def add_trip(self, trip):
 
-        self.trips.append(trip)
+        self.trips.append(trip.id)
 
 
 class Plane_Class:
@@ -101,7 +101,8 @@ class Trip:
 
     def __str__(self):
 
-        to_print  = "  From: " + str(self.departure)
+        to_print  = "  Id: " + str(self.id)
+        to_print += "  From: " + str(self.departure)
         to_print += "  To: " + str(self.arrival)
         to_print += "  Duration: " + str(self.duration)
 

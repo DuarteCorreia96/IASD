@@ -52,16 +52,21 @@ class ASARProblem(Problem):
 
         # Initializes initial state
         self.initial = {
-            "Total Profit": 0, 
-            "Trips": set()
+            "Profit": 0, 
+            "Trips": set(),
+            "Airport": {},
+            "Schedule": {},
+            "Unused": set()
         }
         
+        # Initialize airplanes schedule
         for key in self.problem["P"]["data"]:
+            self.initial["Schedule"][key] = []
+            self.initial["Unused"].add(key)
 
-            self.initial[key] = {}
-            self.initial[key]["Profit"] = 0
-            self.initial[key]["Airport"] = None
-            self.initial[key]["Schedule"] = []
+        # Initialize airports sets
+        for key in self.problem["A"]["data"]:
+            self.initial["Airport"][key] = set()
 
         self.print_problem()
 
@@ -82,28 +87,58 @@ class ASARProblem(Problem):
         action in the given state. The action must be one of
         self.actions(state)."""
 
-        trip_id  = action[0]
-        airplane = action[1]
+        trip = self.problem["L"]["data"][action[0]]
 
+        airplane = action[1]
         plane_class = self.problem["P"]["data"][airplane].plane_class
 
         # First creates a shallow copy of old state
-        new_state = old_state.copy()
+        new_state = {}
+        
+        new_state["Profit"]   = old_state["Profit"]
+        new_state["Trips"]    = old_state["Trips"].copy()
+        new_state["Schedule"] = old_state["Schedule"].copy()
+
+        new_state["Airport"]  = {}
+        for port in old_state["Airport"]:
+            new_state["Airport"][port] = old_state["Airport"][port].copy()
+
+        new_state["Unused"] = old_state["Unused"].copy()
 
         # Then modifies the part that is affected by the new trip
-        new_state[airplane] = {}
+        new_state["Profit"] += trip.profit[plane_class]
 
-        profit = self.problem["L"]["data"][trip_id].profit[plane_class]
-        new_state[airplane]["Profit"] = old_state[airplane]["Profit"] + profit
-        new_state["Total Profit"] += profit
+        new_state["Trips"].add(trip.id)
+        
+        new_state["Airport"][trip.departure].discard(airplane)
+        new_state["Airport"][trip.arrival].add(airplane)
 
-        # Saves the already done trips in a set for easy acess
-        new_state["Trips"] = old_state["Trips"].copy()
-        new_state["Trips"].add(trip_id)
+        new_state["Schedule"][airplane].append(trip.id)
 
-        new_state[airplane]["Airport"] = self.problem["L"]["data"][trip_id].arrival
-        new_state[airplane]["Schedule"] = copy.copy(
-            old_state[airplane]["Schedule"])
-        new_state[airplane]["Schedule"].append(trip_id)
+        if (airplane in old_state["Unused"]):
+            new_state["Unused"].remove(airplane)
 
         return new_state
+
+    def actions(self, state):
+        """ Yields the actions that can be executed in the given
+        state as tuples of (trip_id, airplane_id).
+
+        TO DO! check if the trip is possible because schedule of airport
+        """
+
+        trips = self.problem["L"]["data"]
+        ports = self.problem["A"]["data"]
+        
+        # At the start where the airplanes are still unused
+        for plane in state["Unused"]:
+            for trip in trips:
+                if (trip not in state["Trips"]):
+                    yield (trip, plane)
+
+        # Searches trips per airport
+        for port in ports.values():
+            for trip in port.trips:
+                if (trip not in state["Trips"]):
+                    for plane in state["Airport"][port.id]:
+                        yield (trip, plane)
