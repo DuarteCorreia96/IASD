@@ -97,26 +97,27 @@ class ASARProblem(Problem):
         
         new_state["Profit"]   = old_state["Profit"]
         new_state["Trips"]    = old_state["Trips"].copy()
+        new_state["Airport"]  = {}
         new_state["Schedule"] = old_state["Schedule"].copy()
 
-        new_state["Airport"]  = {}
         for port in old_state["Airport"]:
-            new_state["Airport"][port] = old_state["Airport"][port].copy()
-
-        new_state["Unused"] = old_state["Unused"].copy()
+            if (port == trip.arrival or port == trip.departure):
+                new_state["Airport"][port] = old_state["Airport"][port].copy()
+            else:
+                new_state["Airport"][port] = old_state["Airport"][port]
 
         # Then modifies the part that is affected by the new trip
         new_state["Profit"] += trip.profit[plane_class]
-
         new_state["Trips"].add(trip.id)
-        
         new_state["Airport"][trip.departure].discard(airplane)
         new_state["Airport"][trip.arrival].add(airplane)
-
         new_state["Schedule"][airplane].append(trip.id)
 
         if (airplane in old_state["Unused"]):
+            new_state["Unused"] = old_state["Unused"].copy()
             new_state["Unused"].remove(airplane)
+        else:
+            new_state["Unused"] = old_state["Unused"]
 
         return new_state
 
