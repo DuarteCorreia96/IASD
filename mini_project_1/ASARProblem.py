@@ -85,34 +85,47 @@ class ASARProblem(Problem):
     def result(self, old_state, action):
         """Return the state that results from executing the given
         action in the given state. The action must be one of
-        self.actions(state)."""
+        self.actions(state). All variables that do not change 
+        from previous state maintain their references"""
 
         trip = self.problem["L"]["data"][action[0]]
 
         airplane = action[1]
         plane_class = self.problem["P"]["data"][airplane].plane_class
 
-        # First creates a shallow copy of old state
+        # Initializes new state
         new_state = {}
         
-        new_state["Profit"]   = old_state["Profit"]
-        new_state["Trips"]    = old_state["Trips"].copy()
-        new_state["Airport"]  = {}
-        new_state["Schedule"] = old_state["Schedule"].copy()
+        # Update Profit
+        new_state["Profit"]  = old_state["Profit"]
+        new_state["Profit"] += trip.profit[plane_class]
 
+        # Update Trips done
+        new_state["Trips"] = old_state["Trips"].copy()
+        new_state["Trips"].add(trip.id)
+
+        # Updates Airpot List
+        new_state["Airport"] = {}
         for port in old_state["Airport"]:
             if (port == trip.arrival or port == trip.departure):
                 new_state["Airport"][port] = old_state["Airport"][port].copy()
             else:
                 new_state["Airport"][port] = old_state["Airport"][port]
 
-        # Then modifies the part that is affected by the new trip
-        new_state["Profit"] += trip.profit[plane_class]
-        new_state["Trips"].add(trip.id)
         new_state["Airport"][trip.departure].discard(airplane)
         new_state["Airport"][trip.arrival].add(airplane)
+
+        # Update airplane schedules
+        new_state["Schedule"] = {}
+        for plane in old_state["Schedule"]:
+            if (plane == airplane):
+                new_state["Schedule"][plane] = old_state["Schedule"][plane].copy()
+            else:
+                new_state["Schedule"][plane] = old_state["Schedule"][plane]
+
         new_state["Schedule"][airplane].append(trip.id)
 
+        # Update unused airplanes if needed
         if (airplane in old_state["Unused"]):
             new_state["Unused"] = old_state["Unused"].copy()
             new_state["Unused"].remove(airplane)
