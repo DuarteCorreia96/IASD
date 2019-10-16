@@ -111,4 +111,15 @@ class Trip:
 
         return to_print
 
-    
+    def __hash__(self):
+        return self.id
+
+    def __eq__(self, value):
+
+        if (not isinstance(value, Trip)):
+            return False
+
+        if (self.id == value.id):
+            return True
+
+        return False
