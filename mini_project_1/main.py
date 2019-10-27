@@ -17,6 +17,8 @@ def main():
     states.append(problem.result(states[-1], (1      , airplane)))
     states.append(problem.result(states[-1], (2      , "CS-TVB")))
 
+
+
     for stat in states:
         print("")
         for key in stat:

@@ -1,3 +1,9 @@
+def convert_time_to_min(str_time):
+
+    minutes =  int(str_time) % 100
+    hours   =  (int(str_time) - minutes) // 100
+
+    return hours * 60 + minutes
 
 class Plane:
 
@@ -28,10 +34,11 @@ class Airport:
         words = line.split()
 
         self.id  = words[1]
-        self.open  = words[2]
-        self.close = words[3]
+        self.open  = convert_time_to_min(words[2])  
+        self.close = convert_time_to_min(words[3]) 
 
-        self.trips = []
+        self.departure_trips = set()
+        self.arrival_trips = set()
 
     def __str__(self):
 
@@ -39,15 +46,21 @@ class Airport:
         to_print += "  Open: " + str(self.open)
         to_print += "  Close: " + str(self.close)
 
-        to_print += "  Trips: "
-        for trip in self.trips:
+        to_print += "  Arrival Trips: "
+        for trip in self.arrival_trips:
+            to_print += str(trip) + " | "
+
+        to_print += "  Departure Trips: "
+        for trip in self.departure_trips:
             to_print += str(trip) + " | "
 
         return to_print
 
-    def add_trip(self, trip):
+    def add_arrival_trip(self, trip):
+        self.arrival_trips.add(trip.id)
 
-        self.trips.append(trip.id)
+    def add_departure_trip(self, trip):
+        self.departure_trips.add(trip.id)
 
 
 class Plane_Class:
@@ -57,7 +70,7 @@ class Plane_Class:
         words = line.split()
 
         self.id        = words[1]
-        self.duration  = words[2]
+        self.duration  = convert_time_to_min(words[2]) 
         self.planes    = []
 
     def __str__(self):
@@ -86,7 +99,7 @@ class Trip:
 
         self.departure = words[1]
         self.arrival   = words[2]
-        self.duration  = words[3]
+        self.duration  = convert_time_to_min(words[3]) 
 
         self.profit = {}
         self.id = Trip.counter
