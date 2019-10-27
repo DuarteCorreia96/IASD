@@ -17,8 +17,6 @@ def main():
     states.append(problem.result(states[-1], (1      , airplane)))
     states.append(problem.result(states[-1], (2      , "CS-TVB")))
 
-
-
     for stat in states:
         print("")
         for key in stat:
@@ -28,7 +26,8 @@ def main():
             print(key," : ",stat[key])
 
     for action in problem.actions(states[-1]):
-        print(action)
+        action_cost = problem.path_cost(0, states[-1], action, states[-1])
+        print("action:", action, "\t cost:", action_cost)
 
 if __name__ == "__main__":
     main()

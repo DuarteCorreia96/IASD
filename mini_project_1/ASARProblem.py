@@ -1,4 +1,4 @@
-from aero_company import *
+from aero_company import Airport, Plane_Class, Plane, Trip
 import search
 import copy
 
@@ -115,7 +115,7 @@ class ASARProblem(search.Problem):
         new_state["Schedule"] = {}
         for plane in old_state["Schedule"]:
             if (plane == airplane):
-                new_state["Schedule"][plane]     = old_state["Schedule"][plane].copy()
+                new_state["Schedule"][plane] = old_state["Schedule"][plane].copy()
             else:
                 new_state["Schedule"][plane] = old_state["Schedule"][plane]
 
@@ -140,7 +140,6 @@ class ASARProblem(search.Problem):
         ports  = self.problem["A"]["data"]
         planes = self.problem["P"]["data"]
 
-        
         # Trips that still need to be made
         trips_todo = trips.keys() - state["Trips"]
         if (trips_todo == set()):
@@ -171,3 +170,20 @@ class ASARProblem(search.Problem):
                     yield (trip_id, plane)
 
         return list()
+
+    def path_cost(self, current_cost, old_state, action, new_state):
+        """ Returns the path cost of the new state, reached from the
+        old state by applying action, knowing that the path cost of 
+        old state is the current cost.
+
+        This is simply the profit loss of using the class of the airplane
+        on the trip when compared to the max profit
+        """
+
+        trip = self.problem["L"]["data"][action[0]]
+        plane_class = self.problem["P"]["data"][ action[1]].plane_class
+
+        max_profit  = max(trip.profit.values())
+        trip_profit = trip.profit[plane_class]
+
+        return max_profit - trip_profit
