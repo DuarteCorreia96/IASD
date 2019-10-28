@@ -389,11 +389,10 @@ class ASARProblem(search.Problem):
 
         for plane in state["Schedule"]:
 
-            file.write("S " + plane)
             if (state["Schedule"][plane] == []):
-                file.write("\n")
                 continue
 
+            file.write("S " + plane)
             currTime = ports[trips[state["Schedule"][plane][0]].departure].open
 
             for trip_id in state["Schedule"][plane]:
