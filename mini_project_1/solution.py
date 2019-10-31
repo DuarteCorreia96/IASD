@@ -112,6 +112,8 @@ class Trip:
             self.profit[words[w]] = int( words[w + 1] )
             w += 2
 
+        self.max_profit = max(self.profit.values())
+
     def __str__(self):
 
         to_print  = "  Id: " + str(self.id)
@@ -209,14 +211,11 @@ class ASARProblem(search.Problem):
         airplane = action[1]
         plane_class = self.problem["P"]["data"][airplane].plane_class
 
-        max_profit  = max(trip.profit.values())
-        trip_profit = trip.profit[plane_class]
-
         new_state = State(old_state)
         new_state.trip_id    = trip.id
         new_state.plane      = action[1]
         new_state.plane_time = action[2]
-        new_state.cost       = old_state.cost + (max_profit - trip_profit)
+        new_state.cost       = old_state.cost + (trip.max_profit - trip.profit[plane_class])
 
         return new_state
 
@@ -299,10 +298,7 @@ class ASARProblem(search.Problem):
         trip = self.problem["L"]["data"][action[0]]
         plane_class = self.problem["P"]["data"][ action[1]].plane_class
 
-        max_profit  = max(trip.profit.values())
-        trip_profit = trip.profit[plane_class]
-
-        return max_profit - trip_profit
+        return trip.max_profit - trip.profit[plane_class]
 
     def goal_test(self, state):
         """ Returns True if state s is a goal state, 
@@ -368,10 +364,7 @@ class ASARProblem(search.Problem):
             for trip_id in trips_stop:
 
                 trip = trips[trip_id]
-
-                max_profit  = max(trip.profit.values())
-                trip_profit = trip.profit[plane_class]
-                cost = max_profit - trip_profit
+                cost = trip.max_profit - trip.profit[plane_class]
                 
                 min_cost = min_cost if min_cost < cost else cost
 
@@ -418,7 +411,7 @@ class ASARProblem(search.Problem):
 
                 plane_class = planes[plane].plane_class
                 currTime   += trip.duration + p_class[plane_class].duration
-                profit     += trips[trip_id].profit[plane_class]
+                profit     += trip.profit[plane_class]
                 
             file.write("\n")
 

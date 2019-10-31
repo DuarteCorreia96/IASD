@@ -112,6 +112,8 @@ class Trip:
             self.profit[words[w]] = int( words[w + 1] )
             w += 2
 
+        self.max_profit = max(self.profit.values())
+
     def __str__(self):
 
         to_print  = "  Id: " + str(self.id)
