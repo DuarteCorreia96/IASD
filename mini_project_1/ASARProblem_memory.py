@@ -199,7 +199,46 @@ class ASARProblem(search.Problem):
         return True
 
     def heuristic(self, node):
-        return 0
+        
+        trips   = self.problem["L"]["data"]
+        ports   = self.problem["A"]["data"]
+        planes  = self.problem["P"]["data"]
+
+        planes_start = {}
+        trips_done   = set()
+
+        aux = copy.deepcopy(node.state)
+        while aux.next != None:
+
+            trip = trips[aux.trip_id]
+
+            planes_start[aux.plane] = trip.departure
+            trips_done.add(trip.id)
+
+            aux = aux.next
+
+        heuristic  = 0
+        trips_todo = trips.keys() - trips_done
+        for plane in planes_start:
+
+            start = planes_start[plane]
+            trips_stop  = trips_todo.intersection(ports[start].arrival_trips)
+            plane_class = planes[plane].plane_class
+
+            min_cost = 0
+            for trip_id in trips_stop:
+
+                trip = trips[trip_id]
+
+                max_profit  = max(trip.profit.values())
+                trip_profit = trip.profit[plane_class]
+                cost = max_profit - trip_profit
+                
+                min_cost = min_cost if min_cost < cost else cost
+
+            heuristic += min_cost
+
+        return heuristic
 
     def save(self, file, state):
 
