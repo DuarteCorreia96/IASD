@@ -155,7 +155,7 @@ class ASARProblem(search.Problem):
         """
 
         trip = self.problem["L"]["data"][action[0]]
-        plane_class = self.problem["P"]["data"][ action[1]].plane_class
+        plane_class = self.problem["P"]["data"][action[1]].plane_class
 
         return trip.max_profit - trip.profit[plane_class]
 
@@ -233,7 +233,7 @@ class ASARProblem(search.Problem):
 
     def save(self, file, state):
 
-        if(not self.goal_test(state)):
+        if (not self.goal_test(state)):
             file.write("Infeasible")
             return
 

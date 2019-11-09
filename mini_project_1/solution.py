@@ -145,9 +145,21 @@ import copy
 
 class State():
 
+    counters = {}
+
     def __init__(self, old_state):
 
+        # Just to check branching factor
+
+        self.level = 0
         self.next = old_state
+        if (old_state != None):
+            self.level = old_state.level + 1
+
+        if (self.level in State.counters):
+            State.counters[self.level] += 1
+        else:
+            State.counters[self.level] = 1
 
         self.trip_id    = None
         self.plane      = ""
@@ -296,7 +308,7 @@ class ASARProblem(search.Problem):
         """
 
         trip = self.problem["L"]["data"][action[0]]
-        plane_class = self.problem["P"]["data"][ action[1]].plane_class
+        plane_class = self.problem["P"]["data"][action[1]].plane_class
 
         return trip.max_profit - trip.profit[plane_class]
 
@@ -334,7 +346,7 @@ class ASARProblem(search.Problem):
         return True
 
     def heuristic(self, node):
-
+        
         trips   = self.problem["L"]["data"]
         ports   = self.problem["A"]["data"]
         planes  = self.problem["P"]["data"]
