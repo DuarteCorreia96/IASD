@@ -7,7 +7,7 @@ from solution import ASARProblem
 def main():
     
 
-    filename = "examples/simple1.txt"
+    filename = "examples/simple5.txt"
     problem = ASARProblem()
 
     with open(filename, "r+") as file:
@@ -19,7 +19,8 @@ def main():
     with open(solution_file, "w+") as file:
         problem.save(file, best.state)
 
-    print(best.state.counters)
+    for key in best.state.counters:
+        print(key, ":",best.state.counters[key])
 
 if __name__ == "__main__":
     main()
