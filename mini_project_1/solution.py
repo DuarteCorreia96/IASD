@@ -1,3 +1,5 @@
+import sys
+
 def convert_time_to_min(str_time):
 
     minutes =  int(str_time) % 100
@@ -86,12 +88,14 @@ class Plane_Class:
 
     def add_plane(self, plane):
 
-        self.planes.append(plane)
+        self.planes.append(plane.id)
 
 
 class Trip:
 
-    counter = 0
+    counter  = 0
+    min_cost = sys.maxsize
+    total_profit = 0
 
     def __init__(self, line):
 
@@ -113,6 +117,17 @@ class Trip:
             w += 2
 
         self.max_profit = max(self.profit.values())
+        Trip.total_profit += self.max_profit
+
+        min_cost = sys.maxsize
+        for profit in self.profit.values():
+
+            cost = self.max_profit - profit
+            if (cost != 0):
+                min_cost = min_cost if min_cost < cost else cost
+
+        Trip.min_cost = Trip.min_cost if Trip.min_cost < min_cost else min_cost
+
 
     def __str__(self):
 
@@ -145,14 +160,17 @@ import copy
 
 class State():
 
+    # COMMENT FINAL
+    profit = 0
     counters = {}
 
     def __init__(self, old_state):
 
-        # Just to check branching factor
-
-        self.level = 0
         self.next = old_state
+        
+        # Just to check branching factor
+        # COMMENT FINAL
+        self.level = 0
         if (old_state != None):
             self.level = old_state.level + 1
 
@@ -233,7 +251,7 @@ class ASARProblem(search.Problem):
 
     def actions(self, state):
         """ Yields the actions that can be executed in the given
-        state as tuples of (trip_id, airplane_id).
+        state as triples of (trip_id, airplane_id, plane_time).
         """
 
         trips   = self.problem["L"]["data"]
@@ -248,7 +266,8 @@ class ASARProblem(search.Problem):
 
         trips_done  = set()
         planes_time = {}
-        
+        planes_start = {}
+
         aux = copy.deepcopy(state)
         while aux.next != None:
 
@@ -257,17 +276,34 @@ class ASARProblem(search.Problem):
                 planes_time[aux.plane] = aux.plane_time
                 airports[trip.arrival].add(aux.plane)
 
+            
+            planes_start[aux.plane] = trip.departure
             trips_done.add(trip.id)
 
             aux = aux.next
-
+        
         # Trips that still need to be made
         trips_todo = trips.keys() - trips_done
-        if (trips_todo == set()):
-            return list()
 
-        # checks every plane possibilit for the remaining trips
-        planes_unused = planes.keys() - planes_time.keys()
+        # Check if planes can return to start point
+        for plane in planes_start:
+
+            start = planes_start[plane]
+            if (plane in airports[start]):
+                continue
+
+            trips_stop  = trips_todo.intersection(ports[start].arrival_trips)
+            if (trips_stop == set()):
+                return list()
+
+        # checks for 1 plane of every class for the unused planes
+        planes_unused = set()
+        planes_aux    = planes.keys() - planes_time.keys()
+        
+        for plane_class in p_class.values():
+            aux = planes_aux.intersection(plane_class.planes)
+            if (aux != set()):
+                planes_unused.add(aux.pop())
 
         for trip_id in trips_todo:
 
@@ -298,6 +334,54 @@ class ASARProblem(search.Problem):
 
         return list()
 
+
+    def heuristic(self, node):
+        
+        trips   = self.problem["L"]["data"]
+        ports   = self.problem["A"]["data"]
+        planes  = self.problem["P"]["data"]
+
+        trips_done   = set()
+        planes_start = {}
+        airports     = {}
+        for port in ports:
+            airports[port] = set()
+
+        aux = copy.deepcopy(node.state)
+        while aux.next != None:
+
+            trip = trips[aux.trip_id]
+            if (aux.plane not in planes_start):
+                airports[trip.arrival].add(aux.plane)
+
+            planes_start[aux.plane] = trip.departure
+            trips_done.add(trip.id)
+
+            aux = aux.next
+
+        trips_todo = trips.keys() - trips_done
+        heuristic  = len(trips_todo) * Trip.min_cost / 2
+        for plane in planes_start:
+
+            start = planes_start[plane]
+            if (plane in airports[start]):
+                continue
+
+            trips_stop  = trips_todo.intersection(ports[start].arrival_trips)
+            plane_class = planes[plane].plane_class
+
+            min_cost = 0
+            for trip_id in trips_stop:
+
+                trip = trips[trip_id]
+                cost = trip.max_profit - trip.profit[plane_class]
+                
+                min_cost = min_cost if min_cost < cost else cost
+
+            heuristic += min_cost
+
+        return heuristic
+
     def path_cost(self, current_cost, old_state, action, new_state):
         """ Returns the path cost of the new state, reached from the
         old state by applying action, knowing that the path cost of 
@@ -310,7 +394,11 @@ class ASARProblem(search.Problem):
         trip = self.problem["L"]["data"][action[0]]
         plane_class = self.problem["P"]["data"][action[1]].plane_class
 
-        return trip.max_profit - trip.profit[plane_class]
+        cost = trip.max_profit - trip.profit[plane_class]
+        if (cost == 0):
+            cost = Trip.min_cost / 2
+
+        return current_cost + cost
 
     def goal_test(self, state):
         """ Returns True if state s is a goal state, 
@@ -345,44 +433,6 @@ class ASARProblem(search.Problem):
 
         return True
 
-    def heuristic(self, node):
-        
-        trips   = self.problem["L"]["data"]
-        ports   = self.problem["A"]["data"]
-        planes  = self.problem["P"]["data"]
-
-        planes_start = {}
-        trips_done   = set()
-
-        aux = copy.deepcopy(node.state)
-        while aux.next != None:
-
-            trip = trips[aux.trip_id]
-
-            planes_start[aux.plane] = trip.departure
-            trips_done.add(trip.id)
-
-            aux = aux.next
-
-        heuristic  = 0
-        trips_todo = trips.keys() - trips_done
-        for plane in planes_start:
-
-            start = planes_start[plane]
-            trips_stop  = trips_todo.intersection(ports[start].arrival_trips)
-            plane_class = planes[plane].plane_class
-
-            min_cost = 0
-            for trip_id in trips_stop:
-
-                trip = trips[trip_id]
-                cost = trip.max_profit - trip.profit[plane_class]
-                
-                min_cost = min_cost if min_cost < cost else cost
-
-            heuristic += min_cost
-
-        return heuristic
 
     def save(self, file, state):
 
@@ -428,3 +478,6 @@ class ASARProblem(search.Problem):
             file.write("\n")
 
         file.write("P " + str(profit) + "\n") 
+
+        # COMMENT FINAL
+        State.profit = profit

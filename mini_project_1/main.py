@@ -2,7 +2,7 @@ import sys
 import copy
 import search
 
-from solution import ASARProblem
+from solution import Trip, ASARProblem, State
 
 def main():
     
@@ -13,11 +13,15 @@ def main():
     with open(filename, "r+") as file:
         problem.load(file)
 
-    best = search.astar_search(problem, problem.heuristic)
+    for _ in range(1, 2000):
+        best = search.astar_search(problem, problem.heuristic)
 
-    solution_file = "solution.txt"
-    with open(solution_file, "w+") as file:
-        problem.save(file, best.state)
+        solution_file = "solution.txt"
+        with open(solution_file, "w+") as file:
+            problem.save(file, best.state)
+
+        if(State.profit != 800):
+            print("Deu merda!")
 
     for key in best.state.counters:
         print(key, ":",best.state.counters[key])
