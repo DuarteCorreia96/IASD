@@ -6,25 +6,38 @@ from solution import Trip, ASARProblem, State
 
 def main():
     
+    
+    filename = "examples/simple{}.txt"
+    solution_file = "solutions/solution{}.txt"
 
-    filename = "examples/simple5.txt"
-    problem = ASARProblem()
+    for k in range(1, 9):
 
-    with open(filename, "r+") as file:
-        problem.load(file)
+        print("Solving Problem:", k)
 
-    for _ in range(1, 2000):
-        best = search.astar_search(problem, problem.heuristic)
+        problem = ASARProblem()
+        State.counters = {0: 1}
+        Trip.counter   = 0
+        Trip.min_cost  = sys.maxsize
 
-        solution_file = "solution.txt"
-        with open(solution_file, "w+") as file:
-            problem.save(file, best.state)
+        with open(filename.format(k), "r+") as file:
+            problem.load(file)
 
-        if(State.profit != 800):
-            print("Deu merda!")
+        for _ in range(0, 1):
 
-    for key in best.state.counters:
-        print(key, ":",best.state.counters[key])
+            best = search.astar_search(problem, problem.heuristic)
+            
+            if (best != None): 
+                with open(solution_file.format(k), "w+") as file:
+                    problem.save(file, best.state)
+
+            else:
+                with open(solution_file.format(k), "w+") as file:
+                    problem.save(file, best)
+                
+                print("Infeasible")
+            
+            for key in State.counters:
+                    print(key, ":",State.counters[key])
 
 if __name__ == "__main__":
     main()

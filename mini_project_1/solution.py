@@ -95,7 +95,6 @@ class Trip:
 
     counter  = 0
     min_cost = sys.maxsize
-    total_profit = 0
 
     def __init__(self, line):
 
@@ -117,7 +116,6 @@ class Trip:
             w += 2
 
         self.max_profit = max(self.profit.values())
-        Trip.total_profit += self.max_profit
 
         min_cost = sys.maxsize
         for profit in self.profit.values():
@@ -370,6 +368,9 @@ class ASARProblem(search.Problem):
             trips_stop  = trips_todo.intersection(ports[start].arrival_trips)
             plane_class = planes[plane].plane_class
 
+            if (trips_stop == set()):
+                return sys.maxsize / 20
+
             min_cost = 0
             for trip_id in trips_stop:
 
@@ -379,6 +380,15 @@ class ASARProblem(search.Problem):
                 min_cost = min_cost if min_cost < cost else cost
 
             heuristic += min_cost
+
+        # Prioritize states that origin less states
+        action_counter = 0
+        for _ in self.actions(node.state):
+            action_counter += 1
+        
+        # Min step needs still to be calculated
+        ratio = 10000
+        heuristic += Trip.min_cost / ratio * (action_counter / (action_counter + 1))
 
         return heuristic
 
@@ -436,7 +446,7 @@ class ASARProblem(search.Problem):
 
     def save(self, file, state):
 
-        if(not self.goal_test(state)):
+        if(state == None or not self.goal_test(state)):
             file.write("Infeasible")
             return
 
