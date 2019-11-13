@@ -218,7 +218,7 @@ class State():
     """
 
     # COMMENT FINAL
-    nodes  = 1
+    # nodes  = 1
 
     def __init__(self, old_state):
 
@@ -226,7 +226,7 @@ class State():
         
         # Just to check branching factor
         # COMMENT FINAL
-        State.nodes += 1
+        # State.nodes += 1
 
         # This values should be updated on result after state creation
         self.trip_id    = None
