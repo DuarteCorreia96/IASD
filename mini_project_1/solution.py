@@ -206,7 +206,7 @@ class Trip:
 class State():
     """ Saves a state of the problem.
 
-        .next       :   state that origined this state.
+        .next       :   state that originated this state.
         .trip_id    :   trip made from last state to this one.
         .plane      :   plane that made the trip.
         .plane_time :   current time of the plane that made the trip.
@@ -218,8 +218,7 @@ class State():
     """
 
     # COMMENT FINAL
-    profit = 0
-    counters = {}
+    nodes  = 1
 
     def __init__(self, old_state):
 
@@ -227,14 +226,7 @@ class State():
         
         # Just to check branching factor
         # COMMENT FINAL
-        self.level = 0
-        if (old_state != None):
-            self.level = old_state.level + 1
-
-        if (self.level in State.counters):
-            State.counters[self.level] += 1
-        else:
-            State.counters[self.level] = 1
+        State.nodes += 1
 
         # This values should be updated on result after state creation
         self.trip_id    = None
@@ -594,6 +586,3 @@ class ASARProblem(search.Problem):
             file.write("\n")
 
         file.write("P " + str(profit) + "\n") 
-
-        # COMMENT FINAL
-        State.profit = profit

@@ -11,10 +11,10 @@ def main():
 
     for k in range(1, 9):
 
-        print("Solving Problem:", k)
+        # print("Solving Problem:", k)
 
         problem        = ASARProblem()
-        State.counters = {0: 1}
+        State.nodes    = 1
         Trip.counter   = 0
         Trip.min_cost  = sys.maxsize
 
@@ -29,20 +29,17 @@ def main():
                 with open(solution_file.format(k), "w+") as file:
                     problem.save(file, best.state)
 
+                b_star = State.nodes ** ( 1 / best.depth)
+                branching_str = "Problem: {}\t Number of nodes: {}\t Depth: {} \tB*: {}"
+
+                print(branching_str.format(k, State.nodes, best.depth,  round(b_star, 3)))
+
             else:
                 with open(solution_file.format(k), "w+") as file:
                     problem.save(file, best)
                 
                 print("Infeasible")
             
-            nos = 0
-            for key in State.counters:
-                    #print(key, ":", State.counters[key])
-                    nos += State.counters[key]
-
-            key += 1
-            b_star = nos ** ( 1 / key)
-            print("N =", nos, ", D =", key, "B* =", round(b_star, 3) )
 
 
 if __name__ == "__main__":

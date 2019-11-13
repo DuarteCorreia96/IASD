@@ -1,0 +1,105 @@
+1. Describe the state representation and the operators.
+
+    State saves the following variables:
+
+            .next       :   state parent of this state.
+            .trip_id    :  id of the trip made from last state to this one.
+            .plane     :   plane that made the trip.
+            .plane_time :   current time of the plane that made the trip (this is saved to save computation time since it would evolve see every trip that airplane made and calculate the 
+            current time of the airplane every time this is needed and the gain in time is way better than the loss of memory since it's only an int per state since every time is saved in 
+            minutes).
+            .cost       :   cost of the state, once again for easy comparison and to save computation time.
+
+            The full state of the problem in a state can be achieved by iterating .next till the initial state that has .next= None is reached. 
+
+    Actions: 
+
+        Yields the actions that can be executed in the state as triples of (trip_id, airplane_id, plane_time). Each action describes a trip.
+
+            In the case where there are multiple planes of the same class  that still haven't done a trip only one of them is returned as
+            a action for the trips remaining since they will create equal branches with only the names changed.
+
+            The function also checks if there are trips to return the planes that aren't in their starting airport to that same airport. 
+            In the case of this being impossible the function returns no actions.
+
+    Result:
+        
+        Return the state that results from executing the action in the given state. The action must be one self.actions(state). The only thing this function does is to calculate the cost of 
+        trip and add the cost of the old state, to set the new state it directly uses the information given by the actions. 
+
+        The result is the state after a trip described in action is made.
+
+    Goal Test:
+
+        Verifies that all trips are done and that every plane is on the same airport in which it started the schedule. Returning False if this conditions are not satisfied.
+        
+
+2. Describe the cost and the heuristic functions.
+
+    Cost:
+
+        This cost is simply the profit loss of using a class of the airplane on the trip when compared to the max profit plus the current cost.
+        For example:
+
+            If a trip can be made with 2 different classes 1 and 2, with 75 and 100 profit, respectively. 
+            The max profit is 100 and the cost of hosing class 1 is 25, this would however mean that choosing class 2 is 0 cost. So that this doesn't happen a minimal cost is calculated for 
+            every trip so that when the cost is supposedly 0 it is instead this value. This is done by checking every cost of every trip at the load of the problem, then the minimal cost is half 
+            of the minimum cost  different to 0 that is found. 
+
+        One big advantage of this cost function is that is really easy to compare 2 trips with different profits since they both will need to be made and as such it doesn't matter if one 
+        makes more profit than the other, but it only matters how much loss of profit when compared to the max we would get when choosing a class. It's also very useful when designing 
+        the heuristic since minimal costs can be consistent with little calculations (since it's a predefined global value). 
+
+    Heuristic:
+
+        This heuristic is composed of 3 distinct parts:
+
+            - Checks how many trips the state still needs to reach a goal state and multiplies this values by the minimum cost of a trip.
+            This is help in checking which state needs less actions to reach a goal state.
+
+            It is admissible since it gives the minimal cost of the trips that still need to be made and this is consistent for every state.
+
+            - Checks the minimal cost to return airplanes to the starting airport checking if a airplane is not on the start the minimum
+            cost of every trip that goes to that airport according to the class of the airplane. If it's impossible to return the airplane 
+            to the starting point a goal state cannot be reached and as such the heuristic returns a really high value. 
+            This part should be useful in distinguish states with the same amount of trips made.
+
+            This is also admissible since the obligatory profit loss due to the return of the airplanes to the start is consistent to all states and 
+            there isn't some profit loss that is "bigger" than the other, giving a good value as to how the cost of the state will evolve.  
+
+            - Checks the amount of nodes that this state should expand to and gives higher a higher heuristic score to nodes that expand more states.
+            This is useful because most problems have multiple optimal solutions, and this term "forces" the algorithm to not only find a optimal solution,
+            but to find the one that has a better effective branching factor, leading to an increase in efficiency in the search.
+
+            This one is a bit trickier to prove that is admissible, but it rests on the fact that the cost is a linear combination of all the possible costs
+            of each trip and as such there are values of cost that are not achievable by any state, this can easily proven by this example:
+
+                Imagine that trips have as possible cost: [1,2,3,4,5,6] it is impossible for a state to have cost 16.2 since the cost of the state is a linear combination
+                (integer) of the costs of the trips and the .2 could not appear as a cost. This means that if a state has a cost of 16 and we the heuristic sums 0.2 that 
+                will only act as a way of comparing to states that also have cost 16 but not to states that have other possible values like 17 or 15, thus if the state has
+                optimal cost it will continue to be only comparable to states that also have optimal cost.
+            
+            The difficult part is then to prove that our increment is fact smaller than any possible difference between the cost of two states. This is done by checking 
+            the most right significant number of every cost then (just to be sure) this number is divided by 100 ensuring that there is no way that the difference in cost
+            for two different states is less than this value. 
+
+            This minimal value is then multiplied by n/(n+1) where n is the number of actions given by self.actions(state). This functions is strictly increasing and has 
+            minimum value 0 and maximum value of 1 ensuring that this part of the heuristic is lower than the calculated minimal value. 
+
+3. Does the A* algorithm guarantees the optimal solution? Justify.
+
+    Yes since the heuristic is admissible as justified in question 2.
+
+4. Determine the number of generated nodes, the depth of the solution, and the effective branching factor, for each one of the example files provided at the course webpage.
+
+    This was determined using the solution depth given by the astar_search function and a counter in the initialization of every state to in order to count the number of nodes.
+    The effective branching factor was then calculated using: b* = (nodes_counter)**(1/depth), giving the following results:
+
+    Problem: 1       Number of nodes: 19     Depth: 6       B*: 1.634
+    Problem: 2       Number of nodes: 30     Depth: 8       B*: 1.53
+    Problem: 3       Number of nodes: 17     Depth: 4       B*: 2.031
+    Problem: 4       Number of nodes: 26     Depth: 6       B*: 1.721
+    Problem: 5       Number of nodes: 38     Depth: 8       B*: 1.576
+    Problem: 6       Number of nodes: 1153   Depth: 5       B*: 4.096  (Infeasible)
+    Problem: 7       Number of nodes: 565    Depth: 6       B*: 2.875
+    Problem: 8       Number of nodes: 42     Depth: 8       B*: 1.596 
