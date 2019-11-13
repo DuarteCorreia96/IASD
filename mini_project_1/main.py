@@ -4,8 +4,7 @@ import search
 
 from solution import Trip, ASARProblem, State
 
-def main():
-    
+def main():   
     
     filename = "examples/simple{}.txt"
     solution_file = "solutions/solution{}.txt"
@@ -36,8 +35,15 @@ def main():
                 
                 print("Infeasible")
             
+            nos = 0
             for key in State.counters:
-                    print(key, ":",State.counters[key])
+                    #print(key, ":", State.counters[key])
+                    nos += State.counters[key]
+
+            key += 1
+            b_star = nos ** ( 1 / key)
+            print("N =", nos, ", D =", key, "B* =", round(b_star, 3) )
+
 
 if __name__ == "__main__":
     main()

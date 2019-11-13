@@ -93,8 +93,9 @@ class Plane_Class:
 
 class Trip:
 
-    counter  = 0
-    min_cost = sys.maxsize
+    counter   = 0
+    min_cost  = sys.maxsize
+    min_order = 1
 
     def __init__(self, line):
 
@@ -123,6 +124,9 @@ class Trip:
             cost = self.max_profit - profit
             if (cost != 0):
                 min_cost = min_cost if min_cost < cost else cost
+
+            while (cost / Trip.min_order) - (cost / Trip.min_order) // 1 > 0:
+                Trip.min_order /= 10
 
         Trip.min_cost = Trip.min_cost if Trip.min_cost < min_cost else min_cost
 
@@ -386,9 +390,7 @@ class ASARProblem(search.Problem):
         for _ in self.actions(node.state):
             action_counter += 1
         
-        # Min step needs still to be calculated
-        ratio = 10000
-        heuristic += Trip.min_cost / ratio * (action_counter / (action_counter + 1))
+        heuristic += Trip.min_order / 100 * (action_counter / (action_counter + 1))
 
         return heuristic
 
