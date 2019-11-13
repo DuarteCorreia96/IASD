@@ -1,16 +1,25 @@
+import search
+import copy
 import sys
 
 def convert_time_to_min(str_time):
+    """ Converts a str "hhmm" to integer in minutes
+    """
 
     minutes =  int(str_time) % 100
-    hours   =  (int(str_time) - minutes) // 100
+    hours   = (int(str_time) - minutes) // 100
 
     return hours * 60 + minutes
 
 class Plane:
+    """ Saves the information of a airplane.
 
-    location = None
-    path = [[]]
+        .id            :   name of the airplane.
+        .plane_class   :   name of the class of 
+                            the airplane
+                        
+    It should be initialized with a line starting with "P"
+    """
 
     def __init__(self, line):
 
@@ -18,18 +27,26 @@ class Plane:
 
         self.id = words[1]
         self.plane_class = words[2]
-        self.path_profit = 0
 
     def __str__(self):
 
         to_print  = "  Name: " + str(self.id)
         to_print += "  Class: " + str(self.plane_class)
-        to_print += "  Location: " + str(self.location)
 
         return to_print
 
 
 class Airport:
+    """ Saves the information of an Airport.
+
+        .id                :   name of the airport.
+        .open              :   time of openning in minutes.
+        .close             :   time of closing in minutes.
+        .departure_trips   :   trips that depart from that airport
+        .arrival_trips     :   trips that end at that airport
+    
+    It should be initialized with a line starting with "A"
+    """
 
     def __init__(self, line):
 
@@ -58,14 +75,16 @@ class Airport:
 
         return to_print
 
-    def add_arrival_trip(self, trip):
-        self.arrival_trips.add(trip.id)
-
-    def add_departure_trip(self, trip):
-        self.departure_trips.add(trip.id)
-
 
 class Plane_Class:
+    """ Saves information about a plane class.
+
+        .id        :   name of the class.
+        .duration  :   rotation time of the plane in minutes.
+        .planes    :   set of the planes with that class.
+    
+    It should be initialized with a line starting with "C"
+    """
 
     def __init__(self, line):
 
@@ -73,7 +92,7 @@ class Plane_Class:
 
         self.id        = words[1]
         self.duration  = convert_time_to_min(words[2]) 
-        self.planes    = []
+        self.planes    = set()
 
     def __str__(self):
 
@@ -88,14 +107,41 @@ class Plane_Class:
 
     def add_plane(self, plane):
 
-        self.planes.append(plane.id)
+        self.planes.add(plane.id)
 
 
 class Trip:
+    """ Saves the information of a trip.
 
-    counter   = 0
-    min_cost  = sys.maxsize
-    min_order = 1
+        .id        :   id of the trip.
+        .departure :   departure airport.
+        .arrival   :   arrival airport.
+        .duration  :   trip duration in minutes.
+        .profit    :   dictionary of the profit for every class
+                        using the class as key.
+
+    It also saves some global variables of every trip:
+
+        Trip.counter:
+            counts trips already created and serves as an id 
+            counter so that there is no 2 trips with the same 
+            id.
+
+        Trip.min_cost: 
+            cost that max profit plane class will have so 
+            that it doesn't classes with cost 0, this cost 
+            is half of the minimum cost found on every trip.
+
+        Trip.min_order_inv:
+            inverse of the most right significant number of cost.
+            It's used on the heuristic to diferentiate states 
+            with the same cost in order to select ones that 
+            expand to less nodes.
+    """
+
+    counter       = 0
+    min_cost      = sys.maxsize
+    min_order_inv = 1
 
     def __init__(self, line):
 
@@ -123,10 +169,10 @@ class Trip:
 
             cost = self.max_profit - profit
             if (cost != 0):
-                min_cost = min_cost if min_cost < cost else cost
+                min_cost = min_cost if min_cost < cost / 2 else cost / 2
 
-            while (cost / Trip.min_order) - (cost / Trip.min_order) // 1 > 0:
-                Trip.min_order /= 10
+            while (cost * Trip.min_order_inv) - (cost * Trip.min_order_inv) // 1 > 0:
+                Trip.min_order_inv *= 10
 
         Trip.min_cost = Trip.min_cost if Trip.min_cost < min_cost else min_cost
 
@@ -157,10 +203,19 @@ class Trip:
 
         return False
 
-import search
-import copy
-
 class State():
+    """ Saves a state of the problem.
+
+        .next       :   state that origined this state.
+        .trip_id    :   trip made from last state to this one.
+        .plane      :   plane that made the trip.
+        .plane_time :   current time of the plane that made the trip.
+        .cost       :   cost of the state.
+
+    Values should be set after initialization of the state.
+
+    It is initialized with the parent state that is set as .next.
+    """
 
     # COMMENT FINAL
     profit = 0
@@ -181,6 +236,7 @@ class State():
         else:
             State.counters[self.level] = 1
 
+        # This values should be updated on result after state creation
         self.trip_id    = None
         self.plane      = ""
         self.plane_time = 0
@@ -194,8 +250,6 @@ class State():
 class ASARProblem(search.Problem):
 
     def __init__(self):
-        """ Constructor
-        """
 
         self.initial = State(None)
         self.goal = None # Goal will be defined in the goal_test function
@@ -206,6 +260,7 @@ class ASARProblem(search.Problem):
 
         # The dictionary that will save the full problem to be solved
         # This should not be changed outside of this function 
+        # And should be used as read-only
         self.problem = {
             "A": {"class": Airport,     "data": {}},
             "C": {"class": Plane_Class, "data": {}},
@@ -228,9 +283,8 @@ class ASARProblem(search.Problem):
 
         # Add trips to their airports
         for trip in self.problem["L"]["data"].values():
-            self.problem["A"]["data"][trip.departure].add_departure_trip(trip)
-            self.problem["A"]["data"][trip.arrival].add_arrival_trip(trip)
-
+            self.problem["A"]["data"][trip.departure].departure_trips.add(trip.id)
+            self.problem["A"]["data"][trip.arrival].arrival_trips.add(trip.id)
 
     def result(self, old_state, action):
         """Return the state that results from executing the given
@@ -254,6 +308,15 @@ class ASARProblem(search.Problem):
     def actions(self, state):
         """ Yields the actions that can be executed in the given
         state as triples of (trip_id, airplane_id, plane_time).
+
+        In the case where there are multiple planes of the same class 
+        that still haven't done a trip only one of them is returned as
+        a action for the trips remaining since they will create equal 
+        branches with only the names changed.
+
+        The function also checks if there are trips to return the planes
+        that aren't in their starting airport to that same airport. In the 
+        case of this being impossible the function returns no actions.
         """
 
         trips   = self.problem["L"]["data"]
@@ -298,7 +361,7 @@ class ASARProblem(search.Problem):
             if (trips_stop == set()):
                 return list()
 
-        # checks for 1 plane of every class for the unused planes
+        # Checks for 1 plane of every class for the unused planes
         planes_unused = set()
         planes_aux    = planes.keys() - planes_time.keys()
         
@@ -307,6 +370,7 @@ class ASARProblem(search.Problem):
             if (aux != set()):
                 planes_unused.add(aux.pop())
 
+        # For every remaining trip yield possible airplanes to that trip
         for trip_id in trips_todo:
 
             trip         = trips[trip_id]
@@ -338,6 +402,34 @@ class ASARProblem(search.Problem):
 
 
     def heuristic(self, node):
+        """ Calculates a heuristic for the distance of the current state
+        to the goal_state.
+
+        This heuristic is composed of 3 distinct parts:
+
+            - Checks how many trips the state still needs to reach a goal 
+            state and multiplies this values by the minimum cost of a trip.
+            This is help in checking which state needs less actions to 
+            reach a goal state.
+
+            - Checks the minimal cost to return airplanes to the starting 
+            airport checking if a airplane is not on the start the minimum
+            cost of every trip that goes to that airport according to the 
+            class of the airplane. If it's impossible to return the airplane 
+            to the starting point a goal state cannot be reached and as such
+            the heuristic returns a really high value. This part should be 
+            usefull in distinguish states with the same amount of trips made.
+
+            - Checks the amount of nodes that this state should expand to and 
+            gives higher a higher heuristic score to nodes that expand more 
+            states. In order for the heuristic to stay admissible this part only
+            adds a values that is lower than the minimal difference between possible
+            costs so that it only differentiates states that have the same cost. 
+            This is useful because most problems have multiple optimal solutions,
+            and this term "forces" the algorithm to not only find a optimal solution,
+            but to find the one that has a better effective branching factor, leading 
+            to an increase in efficiency in the search.
+        """
         
         trips   = self.problem["L"]["data"]
         ports   = self.problem["A"]["data"]
@@ -362,7 +454,7 @@ class ASARProblem(search.Problem):
             aux = aux.next
 
         trips_todo = trips.keys() - trips_done
-        heuristic  = len(trips_todo) * Trip.min_cost / 2
+        heuristic  = len(trips_todo) * Trip.min_cost
         for plane in planes_start:
 
             start = planes_start[plane]
@@ -375,7 +467,7 @@ class ASARProblem(search.Problem):
             if (trips_stop == set()):
                 return sys.maxsize / 20
 
-            min_cost = 0
+            min_cost = sys.maxsize
             for trip_id in trips_stop:
 
                 trip = trips[trip_id]
@@ -390,7 +482,8 @@ class ASARProblem(search.Problem):
         for _ in self.actions(node.state):
             action_counter += 1
         
-        heuristic += Trip.min_order / 100 * (action_counter / (action_counter + 1))
+        trip_min_order = 1 / Trip.min_order_inv
+        heuristic += trip_min_order / 100 * (action_counter / (action_counter + 1))
 
         return heuristic
 
@@ -400,7 +493,10 @@ class ASARProblem(search.Problem):
         old state is the current cost.
 
         This is simply the profit loss of using the class of the airplane
-        on the trip when compared to the max profit
+        on the trip when compared to the max profit plus the current cost.
+
+        In the case of no profit loss the cost is set to a minimal cost 
+        that is global for the whole problem.
         """
 
         trip = self.problem["L"]["data"][action[0]]
@@ -408,15 +504,18 @@ class ASARProblem(search.Problem):
 
         cost = trip.max_profit - trip.profit[plane_class]
         if (cost == 0):
-            cost = Trip.min_cost / 2
+            cost = Trip.min_cost
 
         return current_cost + cost
 
     def goal_test(self, state):
         """ Returns True if state s is a goal state, 
-        and False otherwise
+        and False otherwise.
         """
 
+        if (state == None):
+            return False
+            
         trips = self.problem["L"]["data"]
         trips_done    = set()
         planes_start  = {}
@@ -435,10 +534,12 @@ class ASARProblem(search.Problem):
             trips_done.add(trip.id)
             aux = aux.next
 
+        # Checks that every trip was made
         trips_todo = trips.keys() - trips_done
         if (trips_todo != set()):
             return False
 
+        # checks that every airplane is on the starting airport
         for plane in planes_finish.keys():
             if (planes_start[plane] != planes_finish[plane]):
                 return False
@@ -447,8 +548,11 @@ class ASARProblem(search.Problem):
 
 
     def save(self, file, state):
+        """ Saves the solution of the problem to an already 
+        opened file.
+        """
 
-        if(state == None or not self.goal_test(state)):
+        if(not self.goal_test(state)):
             file.write("Infeasible")
             return
 

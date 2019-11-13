@@ -13,7 +13,7 @@ def main():
 
         print("Solving Problem:", k)
 
-        problem = ASARProblem()
+        problem        = ASARProblem()
         State.counters = {0: 1}
         Trip.counter   = 0
         Trip.min_cost  = sys.maxsize
