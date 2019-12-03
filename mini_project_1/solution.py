@@ -218,7 +218,7 @@ class State():
     """
 
     # COMMENT FINAL
-    # nodes  = 1
+    nodes  = 1
 
     def __init__(self, old_state):
 
@@ -226,7 +226,11 @@ class State():
         
         # Just to check branching factor
         # COMMENT FINAL
-        # State.nodes += 1
+        State.nodes += 1
+        if (old_state == None):
+            self.depth = 0
+        else: 
+            self.depth = old_state.depth + 1
 
         # This values should be updated on result after state creation
         self.trip_id    = None
@@ -333,7 +337,6 @@ class ASARProblem(search.Problem):
                 planes_time[aux.plane] = aux.plane_time
                 airports[trip.arrival].add(aux.plane)
 
-            
             planes_start[aux.plane] = trip.departure
             trips_done.add(trip.id)
 
@@ -371,21 +374,26 @@ class ASARProblem(search.Problem):
 
             for plane in planes_unused:
                 
-                rotation = p_class[planes[plane].plane_class].duration
+                rotation     = p_class[planes[plane].plane_class].duration
                 current_time = depart_port.open + trip.duration
 
-                if (current_time > arrival_port.open and \
+                if (current_time <= arrival_port.open):
+                    current_time = arrival_port.open
+
+                if (current_time <= arrival_port.close and \
                     planes[plane].plane_class in trip.profit):
 
                     yield (trip_id, plane, current_time + rotation)
 
             for plane in airports[depart_port.id]:
 
-                rotation = p_class[planes[plane].plane_class].duration
+                rotation     = p_class[planes[plane].plane_class].duration
                 current_time = planes_time[plane] + trip.duration
 
-                if (current_time + rotation < arrival_port.close and \
-                    current_time            > arrival_port.open  and \
+                if (current_time <= arrival_port.open):
+                    current_time = arrival_port.open
+
+                if (current_time <= arrival_port.close and \
                     planes[plane].plane_class in trip.profit):
                     
                     yield (trip_id, plane, current_time + rotation)
@@ -573,6 +581,9 @@ class ASARProblem(search.Problem):
             for trip_id in schedule[plane]:
 
                 trip    = trips[trip_id]
+                if (currTime <= ports[trip.arrival].open):
+                    currTime = ports[trip.arrival].open
+
                 hour    = str(currTime // 60) if (currTime // 60) > 9 else str(0) + str(currTime // 60)
                 minutes = str(currTime %  60) if (currTime %  60) > 9 else str(0) + str(currTime %  60) 
 
