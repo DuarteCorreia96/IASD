@@ -56,31 +56,22 @@ class Problem:
         # Fill problem
         self.read_file(file)
 
-        str_temp = "{}_t_{}"
         bayes_template = []
         for room in self.rooms.values():
-            bayes_template.append((str_temp.format(room.name, 0), '', 0.5))
-        
-        for sensor_id in self.measure[0]:
+            bayes_template.append((room.name + "_p", '', 0.5))
 
-            sensor = self.sensors[sensor_id]
-            bayes_template.append((str_temp.format(sensor.id, 0), str_temp.format(sensor.room, 0), {True: sensor.TPR, False: sensor.FPR}))
+        for room in self.rooms.values():
+                   
+            aux_str = room.name + "_p"
+            for parent in room.adj_rooms:
+                aux_str += " " + parent + "_p"  
 
-        print(self.measure)
-        for k in range(1, len(self.measure)):
-
-            for room in self.rooms.values():          
-                aux_str =  str_temp.format(room.name, k - 1)  
-                for parent in room.adj_rooms:
-                    aux_str += " " + str_temp.format(parent, k - 1)  
-
-                truth_table = self.create_truth_table(len(room.adj_rooms) + 1) if room.adj_rooms else {True: 1, False: 0} 
-                bayes_template.append((str_temp.format(room.name, k), aux_str, truth_table))
-
-            for sensor_id in self.measure[k]:
-
-                sensor = self.sensors[sensor_id]
-                bayes_template.append((str_temp.format(sensor.id, k), str_temp.format(sensor.room, k), {True: sensor.TPR, False: sensor.FPR}))
+            truth_table = self.create_truth_table(len(room.adj_rooms) + 1) if room.adj_rooms else {True: 1, False: 0} 
+            bayes_template.append((room.name, aux_str, truth_table))
+            
+        for sensor in self.sensors.values():
+            bayes_template.append((sensor.id, sensor.room, {True: sensor.TPR, False: sensor.FPR}))
+            bayes_template.append((sensor.id + "_p", sensor.room + "_p", {True: sensor.TPR, False: sensor.FPR}))
 
         for node in bayes_template:
             print(node)
@@ -89,17 +80,29 @@ class Problem:
 
     def solve(self):
 
-        all_measures = {}
-        for k in range(len(self.measure)):
-            for key in self.measure[k]:
-                all_measures[key + "_t_" + str(k)] = self.measure[k][key]
+        current = {}  
+        
+        measure = self.measure.pop(0) 
 
-        print(all_measures)
+        aux = copy.deepcopy(measure)
+        for key in aux:
+            measure[key + "_p"] = measure[key]
+            measure.pop(key, None) 
 
-        current = {}
+        measure = {**measure, **self.measure.pop(0)}
         for room in self.rooms.values():
-            room_name = room.name + "_t_" + str(k)
-            current[room.name] = elimination_ask(room_name, all_measures, self.network_template).prob[True]
+            current[room.name] = elimination_ask(room.name, measure, self.network_template).prob[True]
+
+        print(measure)        
+
+        while self.measure:
+
+            for room in current:
+                self.network_template.variable_node(room + "_p").cpt = {(): current[room]}
+
+            measure = self.measure.pop(0) 
+            for room in self.rooms.values():
+                current[room.name] = elimination_ask(room.name, measure, self.network_template).prob[True]
 
         room = max(current, key = current.get)
         likelihood = current[room]

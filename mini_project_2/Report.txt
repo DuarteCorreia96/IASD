@@ -1,0 +1,75 @@
+Explain how the problem was modelled with a Bayesian network.
+
+The base network is every room with a probability of 0.5 of being on fire since we do not know the initial state.
+
+After that for every timestep t is added rooms as children of herself and adjacent rooms on timestep t-1.
+Each room has a probability of being on fire of:
+
+    1 - If the same room is on fire then it will continue to be on fire
+    P - If a connected room is on fire then the room will be on fire with the probability of the fire propagation 
+    0 - If the room is not on fire and no adjacent room is on fire then the room will not be on fire
+
+Then for every timestep, the sensors that are connected to a room and have a measurement at timestep t the sensors are added as children of the room at time t.
+The sensors are a child of the room they are inserted and have a truth table of:
+
+    {
+        True: sensor.TPR, 
+        False: sensor.FPR
+    }
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Perform a quantitative experimental evaluation of the performance improvement achieved by the 
+variable elimination algorithm, when compared to the enumeration one (function enumeration_ask() of probability.py).
+
+    File           Elimination Ask [s]   Enumeration Ask [s]   #  Increase
+TP3_1_2.txt        0,0006                0,0014                2
+TP3_3_2.txt        0,0007                0,0017                3
+
+TP4_1_2.txt        0,0009                0,0053                6
+TP4_3_2.txt        0,0011                0,0103                10
+
+TP5_1_2.txt        0,0024                0,0264                11
+TP5_3_2.txt        0,0045                0,0280                6      
+TP5_5_2.txt        0,0061                0,0633                10
+
+TP6_1_2.txt        0,0112                0,1341                12
+TP6_3_2.txt        0,0054                0,2092                39
+TP6_5_2.txt        0,0045                0,3180                70
+
+TP7_1_2.txt        0,0107                0,7535                71
+TP7_3_2.txt        0,0101                0,9339                93
+TP7_7_2.txt        0,0098                1,2424                126
+
+TP8_1_2.txt        0,0065                3,2312                500
+            
+
+TP3_1_4.txt        0,0023                0,0765                33
+TP3_3_4.txt        0,0025                0,1009                40
+TP4_1_4.txt        0,0072                1,7390                241
+TP4_3_4.txt        0,0023                1,8552                802
+TP5_3_4.txt        0,0050                39,2024               7 799
+TP5_5_4.txt        0,0068                42,6632               6 266
+    
+
+TP3_1_8,txt        0,0054                420,9482              78 120
+TP3_3_8,txt        0,0030                692,1745              228 634
+P4_1_8.txt         0,0074                More than 6h          A Lot
+P5_1_8.txt         0,0061                More than 6h          A Lot
+
+The file naming convention is TP<#rooms>_<#connections>_<#timesteps>.txt.
+
+It's easy to check that Elimination_ask is increasingly better for higher timesteps, 
+which is to be expected since the number of variables that it should eliminate for 
+each timestep is approximately equal. This leads to an exponential increase in the time 
+of each Enumeration_ask because they will interact with the variables from timesteps 
+that came first adding to the problem of not eliminating each variable in a timestep.
+
+It was observed that the computation time also increases with the number of rooms, which
+is to be expected since increasing every room increases the complexity of the network. 
+
+Another problem arises for a lower number of connections which lead to more rooms that 
+should be eliminated but aren't when using the Enumeration_ask. Even when there are 
+enough connections for the rooms the time still increases (except for some cases) due 
+to the increasing complexity of the network, especially for more timesteps.
